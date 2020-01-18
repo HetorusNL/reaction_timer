@@ -51,6 +51,7 @@ class PygameVisual(object):
             self._trigger["left"]["type"] = trigger_type
             self._trigger["left"]["trigger"] = buffer[0]
             self._initialize_state = "get_left_again"
+            self.pygame_audio.play_sound()
             buffer.remove(buffer[0])
             return True
         return processed
@@ -64,6 +65,7 @@ class PygameVisual(object):
                     self._initialize_state = "get_left"
             else:
                 self._initialize_state = "get_left"
+            self.pygame_audio.play_sound()
             buffer.remove(buffer[0])
             return True
         return processed
@@ -73,6 +75,7 @@ class PygameVisual(object):
             self._trigger["right"]["type"] = trigger_type
             self._trigger["right"]["trigger"] = buffer[0]
             self._initialize_state = "get_right_again"
+            self.pygame_audio.play_sound()
             buffer.remove(buffer[0])
             return True
         return processed
@@ -86,6 +89,7 @@ class PygameVisual(object):
                     self._initialize_state = "get_right"
             else:
                 self._initialize_state = "get_right"
+            self.pygame_audio.play_sound()
             buffer.remove(buffer[0])
             return True
         return processed
@@ -93,6 +97,7 @@ class PygameVisual(object):
     def _any_to_start(self, buffer, trigger_type, processed):
         _ = trigger_type
         while len(buffer) > 0:
+            # don't play a sound here, it's already played in the countdown
             buffer.remove(buffer[0])
             self._initialize_finished = True
             processed = True
