@@ -6,8 +6,8 @@ logging.basicConfig()
 
 
 def main():
-    rt = ReactionTimer()
-    rt.run()
+    _reaction_timer = ReactionTimer()
+    _reaction_timer.run()
 
 
 if __name__ == "__main__":

@@ -23,7 +23,7 @@ class ReactionTimer(object):
 
         # first initialize PygameAudio!
         self.pygame_audio = PygameAudio()
-        self.pygame_visual = PygameVisual()
+        self.pygame_visual = PygameVisual(self.pygame_audio)
 
     def run(self):
         logging.info("starting ReactionTimer run loop")
@@ -46,10 +46,14 @@ class ReactionTimer(object):
             if self.triggered:
                 self._strike()
 
-        # make sure that the countdown of pygame is finished
+        # make sure that the initialization of pygame_visual
+        if not self.pygame_visual.initialize_finished():
+            if not self.pygame_visual.run_initialize():
+                return
+
+        # make sure that the countdown of pygame_visual is finished
         if not self.pygame_visual.countdown_finished():
-            finished = self.pygame_visual.run_countdown(time_delta)
-            if not finished:
+            if not self.pygame_visual.run_countdown(time_delta):
                 return
 
         # make sure we have a trigger
@@ -74,8 +78,12 @@ class ReactionTimer(object):
         self.trigger_time = time.time()
         self.triggered = True
 
+        # set the left/right trigger in pygame_visual (pick one from set)
+        which_trigger = ("left", "right")[random.randint(0, 1)]
+        self.pygame_visual.set_trigger(which_trigger)
+
         # filling the screen with white
-        self.pygame_visual.set_screen_color((255, 255, 255))
+        self.pygame_visual.display_trigger((255, 255, 255))
 
         # add audible click (metronome)
         self.pygame_audio.play_sound()
