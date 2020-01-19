@@ -6,8 +6,7 @@ from .pygame_audio import PygameAudio
 from .pygame_visual import PygameVisual
 
 
-LOG = logging.getLogger()
-logging.basicConfig()
+LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.DEBUG)
 
 
@@ -21,9 +20,9 @@ class ReactionTimer(object):
         self.strike_time = 1  # make sure that strike_time is larger
         self.triggered = False
 
-        # first initialize PygameAudio!
+        # first initialize PygameAudio and then PygameVisual!
         self.pygame_audio = PygameAudio()
-        self.pygame_visual = PygameVisual(self.pygame_audio)
+        self.pygame_visual = PygameVisual(self.pygame_audio, midi_device_id=3)
 
     def run(self):
         logging.info("starting ReactionTimer run loop")
@@ -85,13 +84,16 @@ class ReactionTimer(object):
         # filling the screen with white
         self.pygame_visual.display_trigger((255, 255, 255))
 
-        # add audible click (metronome)
-        self.pygame_audio.play_sound()
+        # add audible click (tick)
+        self.pygame_audio.play_tick()
 
     def _strike(self):
         self.triggered = False
         self.strike_time = time.time()
         logging.info(f"strike after {self.strike_time-self.trigger_time}!")
+
+        # add audible click (tock)
+        self.pygame_audio.play_tock()
 
         # reset the screen to black
         self.pygame_visual.set_screen_color((0, 0, 0))

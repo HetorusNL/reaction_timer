@@ -3,14 +3,18 @@ import math
 import pygame
 from pygame.font import Font
 
-LOG = logging.getLogger()
+from .pygame_midi import PygameMidi
+
+LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.DEBUG)
 
 
 class PygameVisual(object):
-    def __init__(self, pygame_audio):
-        LOG.debug("initializing PygameVisual")
+    def __init__(self, pygame_audio, midi_device_id):
         self.pygame_audio = pygame_audio
+        # first initialize PygameMidi
+        self.pygame_midi = PygameMidi(midi_device_id)
+        LOG.info("initializing PygameVisual")
         pygame.init()
         self.width = 1280
         self.height = 720
@@ -51,7 +55,7 @@ class PygameVisual(object):
             self._trigger["left"]["type"] = trigger_type
             self._trigger["left"]["trigger"] = buffer[0]
             self._initialize_state = "get_left_again"
-            self.pygame_audio.play_sound()
+            self.pygame_audio.play_tick()
             buffer.remove(buffer[0])
             return True
         return processed
@@ -65,7 +69,7 @@ class PygameVisual(object):
                     self._initialize_state = "get_left"
             else:
                 self._initialize_state = "get_left"
-            self.pygame_audio.play_sound()
+            self.pygame_audio.play_tock()
             buffer.remove(buffer[0])
             return True
         return processed
@@ -75,7 +79,7 @@ class PygameVisual(object):
             self._trigger["right"]["type"] = trigger_type
             self._trigger["right"]["trigger"] = buffer[0]
             self._initialize_state = "get_right_again"
-            self.pygame_audio.play_sound()
+            self.pygame_audio.play_tick()
             buffer.remove(buffer[0])
             return True
         return processed
@@ -89,7 +93,7 @@ class PygameVisual(object):
                     self._initialize_state = "get_right"
             else:
                 self._initialize_state = "get_right"
-            self.pygame_audio.play_sound()
+            self.pygame_audio.play_tock()
             buffer.remove(buffer[0])
             return True
         return processed
@@ -112,7 +116,7 @@ class PygameVisual(object):
         value = math.ceil(self.countdown_time)
         if value != self.prev_cntdwn_time:
             self.prev_cntdwn_time = value
-            self.pygame_audio.play_sound()
+            self.pygame_audio.play_tick()
 
         if value <= 0:
             LOG.info("countdown completed")
@@ -133,15 +137,16 @@ class PygameVisual(object):
             elif event.type == pygame.QUIT:
                 result["shutdown"] = True
             elif event.type == pygame.KEYDOWN:
-                if self.initialize_finished():
+                if self.initialize_finished() and self._which_trigger:
                     trigger = self._trigger[self._which_trigger]
                     if trigger["type"] == "keyboard":
                         if trigger["trigger"] == event.key:
                             result["strike"] = True
                 else:
-                    self._key_events.append(event.key)
+                    if event.key:
+                        self._key_events.append(event.key)
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if self.initialize_finished():
+                if self.initialize_finished() and self._which_trigger:
                     if self._trigger[self._which_trigger]["type"] == "mouse":
                         result["strike"] = True
                 else:
@@ -158,6 +163,16 @@ class PygameVisual(object):
                 else:
                     self.set_screen_color(self.last_color)
 
+        # process the PygameMidi event loop (only Note ON events!)
+        for midi_key in self.pygame_midi.get_event_from_event_loop():
+            if self.initialize_finished() and self._which_trigger:
+                trigger = self._trigger[self._which_trigger]
+                if trigger["type"] == "midi":
+                    if trigger["trigger"] == midi_key:
+                        result["strike"] = True
+            else:
+                self._midi_events.append(midi_key)
+
         return result
 
     def set_trigger(self, which_trigger):
@@ -171,7 +186,7 @@ class PygameVisual(object):
         elif self._which_trigger == "right":
             left = int(self.width * 5 / 8)
         else:
-            LOG.error("display_trigger called ith no valid _which_trigger!")
+            LOG.error("display_trigger called with no valid _which_trigger!")
             return
         top = int(self.height / 4)
         width = int(self.width / 4)

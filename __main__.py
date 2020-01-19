@@ -2,7 +2,7 @@ import logging
 
 from reaction_timer import ReactionTimer
 
-logging.basicConfig()
+logging.basicConfig(level=logging.INFO)
 
 
 def main():

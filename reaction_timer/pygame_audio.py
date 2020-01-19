@@ -2,13 +2,13 @@ import logging
 import pygame
 from pygame.mixer import Sound
 
-LOG = logging.getLogger()
-LOG.setLevel(logging.DEBUG)
+LOG = logging.getLogger(__name__)
+LOG.setLevel(logging.INFO)
 
 
 class PygameAudio(object):
     def __init__(self):
-        LOG.debug("initializing PygameAudio")
+        LOG.info("initializing PygameAudio")
         try:
             pygame.mixer.init(buffer=512)
             self.has_audio = True
@@ -18,9 +18,15 @@ class PygameAudio(object):
             LOG.warning("failed to initialize audio!")
 
         if self.has_audio:
-            self.metronome = Sound("reaction_timer/resources/metronome-1.wav")
+            self.tick = Sound("reaction_timer/resources/metronome-3.wav")
+            self.tock = Sound("reaction_timer/resources/metronome-4.wav")
 
-    def play_sound(self):
-        # add audible click (metronome)
+    def play_tick(self):
+        # add audible click (tick)
         if self.has_audio:
-            self.metronome.play()
+            self.tick.play()
+
+    def play_tock(self):
+        # add audible click (tock)
+        if self.has_audio:
+            self.tock.play()
